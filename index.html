@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Examen en grupo — Panel</title>
+<style>
+  :root{
+    --bg:#17110d; --panel:#221913; --panel2:#2c211a; --line:#3a2c22;
+    --gold:#E3B23C; --gold2:#C8912B; --cream:#F3EADD; --muted:#B29A86;
+    --green:#67C06F; --track:#31251c;
+    --oro:#E3B23C; --plata:#CBD1D6; --bronce:#C9884A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--cream);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    padding:clamp(12px,2vw,28px); min-height:100vh;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .titulo{font-size:clamp(22px,3.4vw,40px);font-weight:800;color:var(--gold);letter-spacing:.5px;line-height:1.05}
+  .subtitulo{font-size:clamp(13px,1.5vw,18px);color:var(--muted);margin-top:6px}
+
+  .codigo-card{
+    background:var(--panel2);border:1px solid var(--line);border-radius:16px;
+    padding:14px 22px;text-align:center;min-width:220px;
+  }
+  .codigo-lbl{font-size:clamp(11px,1.1vw,14px);color:var(--muted);text-transform:uppercase;letter-spacing:2px}
+  .codigo{font-size:clamp(34px,5vw,64px);font-weight:800;color:var(--cream);letter-spacing:6px;font-variant-numeric:tabular-nums}
+  .codigo-hint{font-size:clamp(11px,1.1vw,14px);color:var(--gold2);margin-top:4px}
+
+  .barra-estado{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    margin:clamp(14px,2vw,26px) 0 clamp(10px,1.4vw,18px);
+  }
+  .pill{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 16px;font-size:clamp(12px,1.3vw,16px);color:var(--cream)}
+  .pill b{color:var(--gold)}
+  .pill.vivo{color:#0d2a12;background:var(--green);border-color:var(--green);font-weight:700}
+  .pill.err{color:#3a0d0d;background:#e88;border-color:#e88;font-weight:700}
+  .leyenda{margin-left:auto;display:flex;gap:18px;font-size:clamp(11px,1.15vw,14px);color:var(--muted)}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;margin-right:6px}
+
+  #vacio{
+    text-align:center;color:var(--muted);font-size:clamp(15px,2vw,22px);
+    padding:clamp(30px,6vw,70px) 20px;border:1px dashed var(--line);border-radius:16px;
+  }
+  #vacio b{color:var(--gold)}
+
+  #lb{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .row{
+    display:grid;
+    grid-template-columns:clamp(46px,5vw,70px) clamp(48px,5vw,64px) 1fr clamp(200px,26vw,320px) clamp(120px,15vw,190px);
+    align-items:center;gap:clamp(10px,1.4vw,20px);
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(10px,1.3vw,16px) clamp(14px,1.8vw,22px);
+    will-change:transform;
+  }
+  .row.top1{border-color:var(--oro);background:linear-gradient(90deg,rgba(227,178,60,.16),var(--panel) 60%)}
+  .row.top2{border-color:var(--plata)}
+  .row.top3{border-color:var(--bronce)}
+
+  .rank{font-size:clamp(22px,3vw,40px);font-weight:800;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+  .top1 .rank{color:var(--oro)} .top2 .rank{color:var(--plata)} .top3 .rank{color:var(--bronce)}
+
+  .avatar{
+    width:clamp(44px,5vw,60px);height:clamp(44px,5vw,60px);border-radius:50%;
+    background:var(--panel2);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:clamp(22px,2.8vw,34px)
+  }
+  .nombre{font-size:clamp(17px,2.1vw,28px);font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .estado-alumno{font-size:clamp(11px,1.2vw,15px);color:var(--muted);margin-top:2px}
+  .estado-alumno.fin{color:var(--green);font-weight:700}
+
+  .completado-top{display:flex;justify-content:space-between;font-size:clamp(11px,1.2vw,15px);color:var(--muted);margin-bottom:5px}
+  .completado-top b{color:var(--cream)}
+  .track{height:clamp(10px,1.3vw,16px);background:var(--track);border-radius:999px;overflow:hidden}
+  .fill{height:100%;background:var(--green);border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+
+  .primaria{text-align:right}
+  .primaria .num{font-size:clamp(28px,4.2vw,56px);font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+  .primaria .lbl{font-size:clamp(10px,1.1vw,14px);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:3px}
+
+  footer{margin-top:22px;text-align:center;color:var(--muted);font-size:clamp(11px,1.1vw,14px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="titulo">Examen en grupo</div>
+      <div class="subtitulo" id="curso">Conectando…</div>
+    </div>
+    <div class="codigo-card">
+      <div class="codigo-lbl">Código de sala</div>
+      <div class="codigo" id="codigo">—</div>
+      <div class="codigo-hint">Únete en la app con este código</div>
+    </div>
+  </header>
+
+  <div class="barra-estado">
+    <span class="pill"><b id="conectados">0</b> conectados</span>
+    <span class="pill" id="estado">—</span>
+    <span class="pill" id="conexion">Conectando…</span>
+    <div class="leyenda">
+      <span><span class="dot" style="background:var(--gold)"></span>% a la primera (ranking)</span>
+      <span><span class="dot" style="background:var(--green)"></span>% completado</span>
+    </div>
+  </div>
+
+  <div id="entrada" hidden style="text-align:center;padding:clamp(30px,6vw,70px) 20px;border:1px dashed var(--line);border-radius:16px">
+    <div style="font-size:clamp(16px,2.2vw,24px);color:var(--cream);margin-bottom:16px">Escribe el código de la sala</div>
+    <div id="entrada-msg" hidden style="color:#e88;margin-bottom:12px"></div>
+    <input id="entrada-code" maxlength="5" autocomplete="off" placeholder="CÓDIGO"
+      style="font-size:clamp(28px,5vw,48px);font-weight:800;letter-spacing:8px;text-align:center;text-transform:uppercase;width:min(320px,80%);padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--cream)" />
+    <div><button id="entrada-btn"
+      style="margin-top:16px;font-size:18px;font-weight:700;padding:10px 28px;border-radius:12px;border:none;background:var(--gold);color:#2a1c07;cursor:pointer">Mostrar sala</button></div>
+  </div>
+  <div id="vacio" hidden>Esperando alumnos… comparte el código <b id="vacio-code">—</b></div>
+  <ul id="lb"></ul>
+
+  <footer>El marcador se ordena por <b>mayor % a la primera</b>; en empate, por <b>% completado</b>, y luego por quien terminó antes.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+// PANEL DE PROYECCIÓN — conectado a Supabase en tiempo real.
+//
+// El panel CREA la sala al abrir (genera un código e inserta una fila en
+// `rooms`), muestra el código para que los alumnos se unan, y se suscribe a
+// los cambios de `room_participants` para actualizar el marcador en vivo.
+// Al recargar con ?room=<id> reutiliza la misma sala.
+// ─────────────────────────────────────────────────────────────────────────
+
+const cfg = window.SUPABASE_CONFIG;
+const sb  = window.supabase.createClient(cfg.url, cfg.publishableKey);
+
+const state = { room:null, participants:[] };
+
+const pct = (n,d)=> d ? Math.round(n/d*100) : 0;
+
+// Ranking: 1) más a la primera  2) más completados  3) terminó antes
+function cmp(a,b){
+  if (b.aLaPrimera !== a.aLaPrimera) return b.aLaPrimera - a.aLaPrimera;
+  if (b.completados !== a.completados) return b.completados - a.completados;
+  return (a.finishedAt ?? Infinity) - (b.finishedAt ?? Infinity);
+}
+
+// Fila de la BD (snake_case) → forma que usa el panel (camelCase)
+function mapRow(r){
+  return {
+    id:r.id, nombre:r.nombre, emoji:r.emoji,
+    completados:r.completados||0, aLaPrimera:r.a_la_primera||0,
+    total:r.total || (state.room ? state.room.total_problemas : 0),
+    finishedAt: r.finished_at ? Date.parse(r.finished_at) : null,
+  };
+}
+
+const listEl = document.getElementById('lb');
+
+function makeRow(p){
+  const li = document.createElement('li');
+  li.className = 'row'; li.id = 'p-'+p.id; li.dataset.id = p.id;
+  li.innerHTML = `
+    <div class="rank"></div>
+    <div class="avatar">${p.emoji||'♟️'}</div>
+    <div>
+      <div class="nombre"></div>
+      <div class="estado-alumno"></div>
+    </div>
+    <div>
+      <div class="completado-top"><span>Completado</span><span><b class="comp-num">0</b>/${p.total} · <span class="comp-pct">0</span>%</span></div>
+      <div class="track"><div class="fill" style="width:0%"></div></div>
+    </div>
+    <div class="primaria">
+      <div class="num"><span class="prim-pct">0</span>%</div>
+      <div class="lbl">a la primera</div>
+    </div>`;
+  return li;
+}
+
+function updateRow(el, p, i){
+  el.classList.toggle('top1', i===0);
+  el.classList.toggle('top2', i===1);
+  el.classList.toggle('top3', i===2);
+  el.querySelector('.rank').textContent = (i+1);
+  el.querySelector('.avatar').textContent = p.emoji||'♟️';
+  el.querySelector('.nombre').textContent = p.nombre;
+  const est = el.querySelector('.estado-alumno');
+  if (p.finishedAt){ est.textContent='✓ Terminó'; est.classList.add('fin'); }
+  else { est.textContent='Resolviendo…'; est.classList.remove('fin'); }
+  el.querySelector('.comp-num').textContent = p.completados;
+  el.querySelector('.comp-pct').textContent = pct(p.completados, p.total);
+  el.querySelector('.fill').style.width = pct(p.completados, p.total) + '%';
+  el.querySelector('.prim-pct').textContent = pct(p.aLaPrimera, p.total);
+}
+
+function render(){
+  document.getElementById('conectados').textContent = state.participants.length;
+  const vacio = document.getElementById('vacio');
+  vacio.hidden = state.participants.length > 0;
+  listEl.hidden = state.participants.length === 0;
+
+  // FLIP: posiciones previas
+  const prev = new Map();
+  [...listEl.children].forEach(el => prev.set(el.dataset.id, el.getBoundingClientRect().top));
+
+  const sorted = [...state.participants].sort(cmp);
+  const vivos = new Set(sorted.map(p=>'p-'+p.id));
+  // quitar filas de participantes que ya no están
+  [...listEl.children].forEach(el=>{ if(!vivos.has(el.id)) el.remove(); });
+
+  sorted.forEach((p,i)=>{
+    let el = document.getElementById('p-'+p.id);
+    if(!el){ el = makeRow(p); }
+    updateRow(el, p, i);
+    listEl.appendChild(el);
+  });
+
+  // invertir + animar
+  [...listEl.children].forEach(el=>{
+    const oldTop = prev.get(el.dataset.id);
+    if(oldTop==null) return;
+    const dy = oldTop - el.getBoundingClientRect().top;
+    if(dy){
+      el.style.transition='none';
+      el.style.transform=`translateY(${dy}px)`;
+      requestAnimationFrame(()=>{
+        el.style.transition='transform .5s cubic-bezier(.2,.8,.2,1)';
+        el.style.transform='';
+      });
+    }
+  });
+}
+
+function setConexion(txt, cls){
+  const el = document.getElementById('conexion');
+  el.textContent = txt;
+  el.className = 'pill' + (cls ? ' '+cls : '');
+}
+const ESTADO_LBL = { lobby:'Sala abierta', activo:'Ronda en curso', terminado:'Ronda terminada' };
+
+// Muestra la pantalla para escribir el código de la sala. Al enviar, recarga
+// con ?code=XXXX para que init() abra esa sala.
+function mostrarEntradaCodigo(msg){
+  document.getElementById('lb').hidden = true;
+  document.getElementById('vacio').hidden = true;
+  document.getElementById('entrada').hidden = false;
+  document.getElementById('codigo').textContent = '—';
+  document.getElementById('curso').textContent = 'Escribe el código para proyectar la sala';
+  setConexion('Sin sala', '');
+  const m = document.getElementById('entrada-msg');
+  if (msg){ m.textContent = msg; m.hidden = false; } else { m.hidden = true; }
+  const inp = document.getElementById('entrada-code');
+  const go = ()=>{ const v=(inp.value||'').trim().toUpperCase(); if(v) location.search='?code='+encodeURIComponent(v); };
+  document.getElementById('entrada-btn').onclick = go;
+  inp.onkeydown = (e)=>{ if(e.key==='Enter') go(); };
+  inp.focus();
+}
+
+// Busca la sala por ?room=<id> o ?code=XXXX. Devuelve la fila o null.
+async function obtenerSala(){
+  const params = new URLSearchParams(location.search);
+  const byRoom = params.get('room');
+  if (byRoom){
+    const { data } = await sb.from('rooms').select('*').eq('id', byRoom).maybeSingle();
+    if (data) return data;
+  }
+  const byCode = params.get('code');
+  if (byCode){
+    const { data } = await sb.from('rooms').select('*')
+      .eq('code', byCode.trim().toUpperCase()).maybeSingle();
+    if (data) return data;
+    return { _notFound: byCode.trim().toUpperCase() };
+  }
+  return null;
+}
+
+async function cargarParticipantes(){
+  const { data, error } = await sb.from('room_participants')
+    .select('*').eq('room_id', state.room.id);
+  if (error) throw error;
+  state.participants = (data||[]).map(mapRow);
+  render();
+}
+
+function suscribir(){
+  sb.channel('room-'+state.room.id)
+    .on('postgres_changes',
+        { event:'*', schema:'public', table:'room_participants',
+          filter:'room_id=eq.'+state.room.id },
+        (payload)=>{
+          if (payload.eventType==='DELETE'){
+            const id = payload.old && payload.old.id;
+            state.participants = state.participants.filter(p=>p.id!==id);
+          } else {
+            const row = mapRow(payload.new);
+            const i = state.participants.findIndex(p=>p.id===row.id);
+            if (i>=0) state.participants[i]=row; else state.participants.push(row);
+          }
+          render();
+        })
+    .on('postgres_changes',
+        { event:'UPDATE', schema:'public', table:'rooms',
+          filter:'id=eq.'+state.room.id },
+        (payload)=>{
+          state.room = payload.new;
+          document.getElementById('estado').textContent =
+            ESTADO_LBL[state.room.estado] || state.room.estado;
+        })
+    .subscribe((status)=>{
+      if (status==='SUBSCRIBED') setConexion('● En vivo', 'vivo');
+    });
+}
+
+async function init(){
+  try{
+    const room = await obtenerSala();
+    if (!room){ mostrarEntradaCodigo(); return; }
+    if (room._notFound){
+      mostrarEntradaCodigo('No se encontró la sala "'+room._notFound+'". Verifica el código.');
+      return;
+    }
+    state.room = room;
+    document.getElementById('entrada').hidden = true;
+    document.getElementById('codigo').textContent = room.code;
+    document.getElementById('vacio-code').textContent = room.code;
+    document.getElementById('curso').textContent =
+      (room.curso_titulo||'Examen') + ' · ' + room.total_problemas + ' diagramas';
+    document.getElementById('estado').textContent =
+      ESTADO_LBL[room.estado] || room.estado;
+    await cargarParticipantes();
+    suscribir();
+  }catch(e){
+    console.error('Panel error:', e);
+    setConexion('Error de conexión', 'err');
+    document.getElementById('curso').textContent = 'No se pudo conectar con Supabase';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
