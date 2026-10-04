@@ -127,14 +127,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
-// ─────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────
 // PANEL DE PROYECCIÓN — conectado a Supabase en tiempo real.
 //
 // El panel CREA la sala al abrir (genera un código e inserta una fila en
 // `rooms`), muestra el código para que los alumnos se unan, y se suscribe a
 // los cambios de `room_participants` para actualizar el marcador en vivo.
 // Al recargar con ?room=<id> reutiliza la misma sala.
-// ─────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────
 
 const cfg = window.SUPABASE_CONFIG;
 const sb  = window.supabase.createClient(cfg.url, cfg.publishableKey);
@@ -266,18 +266,32 @@ function mostrarEntradaCodigo(msg){
 async function obtenerSala(){
   const params = new URLSearchParams(location.search);
   const byRoom = params.get('room');
+  // OJO: un error de red/servidor NO es «sala no encontrada»: si Supabase está
+  // en pausa (se pausa tras ~7 días sin uso) hay que decirlo claramente.
   if (byRoom){
-    const { data } = await sb.from('rooms').select('*').eq('id', byRoom).maybeSingle();
+    const { data, error } = await sb.from('rooms').select('*').eq('id', byRoom).maybeSingle();
+    if (error) throw error;
     if (data) return data;
   }
   const byCode = params.get('code');
   if (byCode){
-    const { data } = await sb.from('rooms').select('*')
+    const { data, error } = await sb.from('rooms').select('*')
       .eq('code', byCode.trim().toUpperCase()).maybeSingle();
+    if (error) throw error;
     if (data) return data;
     return { _notFound: byCode.trim().toUpperCase() };
   }
   return null;
+}
+
+/// «Curso · Diagramas nº 31–60 (30)» o, en salas antiguas, «Curso · 984 diagramas».
+function textoCurso(room){
+  const titulo = room.curso_titulo || 'Examen';
+  if (room.rango_desde != null && room.rango_hasta != null){
+    return titulo + ' · Diagramas nº ' + room.rango_desde + '–' + room.rango_hasta +
+      ' (' + room.total_problemas + ')';
+  }
+  return titulo + ' · ' + room.total_problemas + ' diagramas';
 }
 
 async function cargarParticipantes(){
@@ -329,8 +343,7 @@ async function init(){
     document.getElementById('entrada').hidden = true;
     document.getElementById('codigo').textContent = room.code;
     document.getElementById('vacio-code').textContent = room.code;
-    document.getElementById('curso').textContent =
-      (room.curso_titulo||'Examen') + ' · ' + room.total_problemas + ' diagramas';
+    document.getElementById('curso').textContent = textoCurso(room);
     document.getElementById('estado').textContent =
       ESTADO_LBL[room.estado] || room.estado;
     await cargarParticipantes();
@@ -338,7 +351,10 @@ async function init(){
   }catch(e){
     console.error('Panel error:', e);
     setConexion('Error de conexión', 'err');
-    document.getElementById('curso').textContent = 'No se pudo conectar con Supabase';
+    document.getElementById('curso').textContent =
+      'No se pudo conectar con el servidor de salas (Supabase). Si lleva más de ' +
+      'una semana sin usarse, está en pausa: entra en supabase.com y pulsa ' +
+      '«Restore project». Luego recarga esta página.';
   }
 }
 
