@@ -127,14 +127,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script>
-// ───────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 // PANEL DE PROYECCIÓN — conectado a Supabase en tiempo real.
 //
 // El panel CREA la sala al abrir (genera un código e inserta una fila en
 // `rooms`), muestra el código para que los alumnos se unan, y se suscribe a
 // los cambios de `room_participants` para actualizar el marcador en vivo.
 // Al recargar con ?room=<id> reutiliza la misma sala.
-// ────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
 
 const cfg = window.SUPABASE_CONFIG;
 const sb  = window.supabase.createClient(cfg.url, cfg.publishableKey);
