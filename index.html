@@ -92,10 +92,23 @@
   .primaria .lbl{font-size:clamp(10px,1.1vw,14px);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:3px}
 
   footer{margin-top:22px;text-align:center;color:var(--muted);font-size:clamp(11px,1.1vw,14px)}
+
+  .btn-exportar{
+    margin-left:8px;cursor:pointer;font-weight:700;
+    background:var(--gold);color:#2a1c07;border:none;border-radius:999px;
+    padding:6px 16px;font-size:clamp(12px,1.3vw,15px);
+  }
+  .btn-exportar:disabled{opacity:.6;cursor:wait}
+  .btn-exportar:hover:not(:disabled){filter:brightness(1.06)}
+  body.exportando .no-exportar{display:none !important}
+  body.exportando .wrap{
+    max-width:1100px;padding:28px;background:var(--bg);
+  }
+  body.exportando .row{will-change:auto}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="captura">
   <header>
     <div>
       <div class="titulo">Examen en grupo</div>
@@ -112,6 +125,7 @@
     <span class="pill"><b id="conectados">0</b> conectados</span>
     <span class="pill" id="estado">—</span>
     <span class="pill" id="conexion">Conectando…</span>
+    <button type="button" class="btn-exportar no-exportar" id="btn-exportar" title="Descarga una imagen PNG del marcador completo">Exportar imagen</button>
     <div class="leyenda">
       <span><span class="dot" style="background:var(--gold)"></span>% a la primera (ranking)</span>
       <span><span class="dot" style="background:var(--green)"></span>barra: a la primera</span>
@@ -119,7 +133,7 @@
     </div>
   </div>
 
-  <div id="entrada" hidden style="text-align:center;padding:clamp(30px,6vw,70px) 20px;border:1px dashed var(--line);border-radius:16px">
+  <div id="entrada" class="no-exportar" hidden style="text-align:center;padding:clamp(30px,6vw,70px) 20px;border:1px dashed var(--line);border-radius:16px">
     <div style="font-size:clamp(16px,2.2vw,24px);color:var(--cream);margin-bottom:16px">Escribe el código de la sala</div>
     <div id="entrada-msg" hidden style="color:#e88;margin-bottom:12px"></div>
     <input id="entrada-code" maxlength="5" autocomplete="off" placeholder="CÓDIGO"
@@ -134,6 +148,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="supabase-config.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────
@@ -170,6 +185,52 @@ function mapRow(r){
 }
 
 const listEl = document.getElementById('lb');
+
+async function exportarResultado(){
+  const btn = document.getElementById('btn-exportar');
+  if (!btn || typeof html2canvas !== 'function') {
+    alert('No se pudo cargar el generador de imágenes. Revisa la conexión a internet.');
+    return;
+  }
+  if (!state.participants.length) {
+    alert('Aún no hay alumnos en el marcador.');
+    return;
+  }
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Generando…';
+  document.body.classList.add('exportando');
+  // Deja que el layout se asiente (ocultar botón / entrada).
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  try {
+    const el = document.getElementById('captura');
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#17110d',
+      scale: Math.min(2, window.devicePixelRatio || 2),
+      useCORS: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight,
+    });
+    const code = (state.room && state.room.code) ? state.room.code : 'sala';
+    const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '');
+    const a = document.createElement('a');
+    a.download = `examen_${code}_${stamp}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  } catch (e) {
+    console.error(e);
+    alert('No se pudo generar la imagen. Inténtalo de nuevo.');
+  } finally {
+    document.body.classList.remove('exportando');
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+}
+
+document.getElementById('btn-exportar').addEventListener('click', exportarResultado);
 
 function makeRow(p){
   const li = document.createElement('li');
