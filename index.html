@@ -8,7 +8,7 @@
   :root{
     --bg:#17110d; --panel:#221913; --panel2:#2c211a; --line:#3a2c22;
     --gold:#E3B23C; --gold2:#C8912B; --cream:#F3EADD; --muted:#B29A86;
-    --green:#67C06F; --track:#31251c;
+    --green:#67C06F; --red:#E57373; --track:#31251c;
     --oro:#E3B23C; --plata:#CBD1D6; --bronce:#C9884A;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -76,8 +76,16 @@
 
   .completado-top{display:flex;justify-content:space-between;font-size:clamp(11px,1.2vw,15px);color:var(--muted);margin-bottom:5px}
   .completado-top b{color:var(--cream)}
-  .track{height:clamp(10px,1.3vw,16px);background:var(--track);border-radius:999px;overflow:hidden}
-  .fill{height:100%;background:var(--green);border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+  .track{
+    height:clamp(10px,1.3vw,16px);background:var(--track);border-radius:999px;overflow:hidden;
+    display:flex;flex-direction:row;align-items:stretch;
+  }
+  .fill-ok,.fill-fail{
+    height:100%;flex:0 0 auto;min-width:0;
+    transition:width .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .fill-ok{background:var(--green)}
+  .fill-fail{background:var(--red)}
 
   .primaria{text-align:right}
   .primaria .num{font-size:clamp(28px,4.2vw,56px);font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
@@ -106,7 +114,8 @@
     <span class="pill" id="conexion">Conectando…</span>
     <div class="leyenda">
       <span><span class="dot" style="background:var(--gold)"></span>% a la primera (ranking)</span>
-      <span><span class="dot" style="background:var(--green)"></span>% completado</span>
+      <span><span class="dot" style="background:var(--green)"></span>barra: a la primera</span>
+      <span><span class="dot" style="background:var(--red)"></span>barra: con fallos</span>
     </div>
   </div>
 
@@ -174,7 +183,10 @@ function makeRow(p){
     </div>
     <div>
       <div class="completado-top"><span>Completado</span><span><b class="comp-num">0</b>/${p.total} · <span class="comp-pct">0</span>%</span></div>
-      <div class="track"><div class="fill" style="width:0%"></div></div>
+      <div class="track">
+        <div class="fill-ok" style="width:0%"></div>
+        <div class="fill-fail" style="width:0%"></div>
+      </div>
     </div>
     <div class="primaria">
       <div class="num"><span class="prim-pct">0</span>%</div>
@@ -195,7 +207,11 @@ function updateRow(el, p, i){
   else { est.textContent='Resolviendo…'; est.classList.remove('fin'); }
   el.querySelector('.comp-num').textContent = p.completados;
   el.querySelector('.comp-pct').textContent = pct(p.completados, p.total);
-  el.querySelector('.fill').style.width = pct(p.completados, p.total) + '%';
+  const total = Math.max(p.total || 0, 1);
+  const ok = Math.max(0, Math.min(p.aLaPrimera || 0, p.completados || 0));
+  const fail = Math.max(0, (p.completados || 0) - ok);
+  el.querySelector('.fill-ok').style.width = ((ok / total) * 100) + '%';
+  el.querySelector('.fill-fail').style.width = ((fail / total) * 100) + '%';
   el.querySelector('.prim-pct').textContent = pct(p.aLaPrimera, p.total);
 }
 
@@ -287,11 +303,12 @@ async function obtenerSala(){
 /// «Curso · Diagramas nº 31–60 (30)» o, en salas antiguas, «Curso · 984 diagramas».
 function textoCurso(room){
   const titulo = room.curso_titulo || 'Examen';
+  const sinQuiz = room.omitir_quiz ? ' · solo MOV' : '';
   if (room.rango_desde != null && room.rango_hasta != null){
     return titulo + ' · Diagramas nº ' + room.rango_desde + '–' + room.rango_hasta +
-      ' (' + room.total_problemas + ')';
+      ' (' + room.total_problemas + ')' + sinQuiz;
   }
-  return titulo + ' · ' + room.total_problemas + ' diagramas';
+  return titulo + ' · ' + room.total_problemas + ' diagramas' + sinQuiz;
 }
 
 async function cargarParticipantes(){
